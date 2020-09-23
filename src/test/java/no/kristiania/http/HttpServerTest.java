@@ -24,7 +24,7 @@ public class HttpServerTest {
     }
 
     @Test
-    void shouldReadResponseCode() {
+    void shouldReadResponseCode() throws IOException{
         HttpServer server = new HttpServer(0);
         server.start();
         int port = server.getActualPort();

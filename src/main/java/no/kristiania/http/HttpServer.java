@@ -11,6 +11,10 @@ public class HttpServer {
     public HttpServer(int port) throws IOException {
         this.serverSocket = new ServerSocket(port);
 
+    }
+
+    public void start(){
+
         new Thread(() -> {
             try {
                 Socket socket = serverSocket.accept();
@@ -21,11 +25,10 @@ public class HttpServer {
         }).start();
     }
 
-
-
-    public static void main(String[] args) throws IOException {
-
+    public int getActualPort(){
+        return serverSocket.getLocalPort();
     }
+
 
     private void handleRequest(Socket socket) throws IOException {
         String responseCode = "200";
