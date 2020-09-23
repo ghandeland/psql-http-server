@@ -18,7 +18,6 @@ public class HttpClient {
                 + "\r\n";
 
         Socket socket = new Socket(hostName, port);
-
         socket.getOutputStream().write(request.getBytes());
 
         String responseLine = readLine(socket);

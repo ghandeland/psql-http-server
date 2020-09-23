@@ -23,7 +23,7 @@ public class HttpServerTest {
         assertEquals(404, client.getStatusCode());
     }
 
-    /*@Test
+    @Test
     void shouldReadResponseCode() {
         HttpServer server = new HttpServer(0);
         server.start();
@@ -31,6 +31,6 @@ public class HttpServerTest {
         HttpClient client = new HttpClient("localhost", port, "");
         HttpResponse response = client.executeRequest();
         assertEquals(200, response.getResponseCode());
-    }*/
+    }
 
 }
