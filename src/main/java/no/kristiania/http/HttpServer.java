@@ -10,7 +10,7 @@ public class HttpServer {
 
     public HttpServer(int port) throws IOException {
         this.serverSocket = new ServerSocket(port);
-
+        start();
     }
 
     public void start(){
@@ -32,9 +32,8 @@ public class HttpServer {
 
     private void handleRequest(Socket socket) throws IOException {
         String responseCode = "200";
-        String requestLine = HttpClient.readLine(socket);
+        String requestLine = HttpMessage.readLine(socket);
 
-        System.out.println(requestLine);
         String requestTarget = requestLine.split(" ")[1];
         int questionPos = requestTarget.indexOf('?');
         if(questionPos != -1) {
@@ -43,7 +42,6 @@ public class HttpServer {
             responseCode = queryPair[1];
         }
 
-
         String response = "HTTP/1.1 " + responseCode + " OK\r\n" +
                 "Content-Length: 12\r\n" +
                 "Content-Type: text/plain\r\n" +
@@ -51,5 +49,14 @@ public class HttpServer {
                 "Hello World!";
         socket.getOutputStream().write((response).getBytes());
     }
+
+    /*public static void main(String[] args) throws IOException {
+        HttpServer server = new HttpServer(10009);
+        server.start();
+        int port = server.getActualPort();
+        HttpClient client = new HttpClient("localhost", port, "200");
+        HttpMessage response = client.executeRequest(client.getSocket());
+
+    }*/
 
 }
