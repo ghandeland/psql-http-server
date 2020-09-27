@@ -9,11 +9,17 @@ public class HttpMessage {
 
     private Map<String, String> headers = new HashMap<>();
     private String startLine;
-    private String code;
+    private int code;
 
-    public String getCode() { return code; }
+    public String getBody() { return body; }
 
-    public void setCode(String code) { this.code = code; }
+    public void setBody(String body) { this.body = body; }
+
+    private String body;
+
+    public int getCode() { return code; }
+
+    public void setCode(int code) { this.code = code; }
 
     public void setHeader(String headerName, String headerValue) { headers.put(headerName, headerValue); }
 
@@ -31,6 +37,9 @@ public class HttpMessage {
             writeLine(socket, header.getKey() + ": " + header.getValue());
         }
         writeLine(socket, "");
+        if(body != null) {
+            socket.getOutputStream().write(getBody().getBytes());
+        }
     }
 
     private void writeLine(Socket socket, String line) throws IOException {

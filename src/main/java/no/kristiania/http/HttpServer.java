@@ -7,22 +7,30 @@ import java.net.Socket;
 public class HttpServer {
 
     private final ServerSocket serverSocket;
+    private ServerThread serverThread;
 
     public HttpServer(int port) throws IOException {
         this.serverSocket = new ServerSocket(port);
-        start();
+        serverThread = new ServerThread();
     }
 
-    public void start(){
-
-        new Thread(() -> {
+    private class ServerThread extends Thread {
+        @Override
+        public void run() {
             try {
                 Socket socket = serverSocket.accept();
                 handleRequest(socket);
             } catch(IOException e) {
                 e.printStackTrace();
             }
-        }).start();
+        }
+    }
+
+    public void start(){ serverThread.start(); }
+
+    public void stop() throws IOException {
+        serverSocket.close();
+        serverThread = null;
     }
 
     public int getActualPort(){
@@ -31,32 +39,48 @@ public class HttpServer {
 
 
     private void handleRequest(Socket socket) throws IOException {
-        String responseCode = "200";
-        String requestLine = HttpMessage.readLine(socket);
+        HttpMessage response = new HttpMessage();
 
+        String requestLine = HttpMessage.readLine(socket);
+        System.out.println(requestLine);
         String requestTarget = requestLine.split(" ")[1];
         int questionPos = requestTarget.indexOf('?');
+
         if(questionPos != -1) {
             String queryString = requestTarget.substring(questionPos + 1);
-            String[] queryPair = queryString.split("=");
-            responseCode = queryPair[1];
+
+            String[] queryParameters = queryString.split("&");
+            for(String parameter : queryParameters) {
+                String[] parameterPair = parameter.split("=");
+                response.setHeader(parameterPair[0], parameterPair[1]);
+            }
         }
 
-        String response = "HTTP/1.1 " + responseCode + " OK\r\n" +
+        //response.setCode();
+        response.setStartLine("HTTP/1.1 " + response.getCode() + " OK");
+        response.setBody("Hello world");
+        response.setHeader("Content-Length", Integer.toString(response.getBody().length()));
+        response.setHeader("Content-Type", "text/plain");
+
+
+        String responseString = "HTTP/1.1 " + response.getCode() + " OK\r\n" +
                 "Content-Length: 12\r\n" +
                 "Content-Type: text/plain\r\n" +
                 "\r\n" +
                 "Hello World!";
-        socket.getOutputStream().write((response).getBytes());
+
+        response.write(socket);
     }
 
-    /*public static void main(String[] args) throws IOException {
-        HttpServer server = new HttpServer(10009);
+    public static void main(String[] args) throws IOException {
+        HttpServer server = new HttpServer(10010);
         server.start();
-        int port = server.getActualPort();
-        HttpClient client = new HttpClient("localhost", port, "200");
-        HttpMessage response = client.executeRequest(client.getSocket());
+        HttpClient client = new HttpClient("localhost", 10010, "\"?status=302&Location=http://www.example.com\"");
+        client.executeRequest();
+        HttpMessage response = client.executeRequest();
+        client.closeSocket();
+        server.stop();
 
-    }*/
+    }
 
 }

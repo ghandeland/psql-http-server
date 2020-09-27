@@ -11,11 +11,6 @@ public class HttpClient {
     private Map<String, String> responseHeaders = new HashMap<>();
     private String responseBody = "";
     private String startLine = "";
-
-    public Socket getSocket() {
-        return socket;
-    }
-
     private Socket socket;
 
     public HttpClient(final String hostName, int port, final String requestTarget) throws IOException {
@@ -24,21 +19,15 @@ public class HttpClient {
         this.socket = new Socket(hostName, port);
         requestHeaders.put("Host", hostName);
 
-        String request = startLine + "\r\n"
-                + "Host: " + hostName + "\r\n"
-                + "\r\n";
-
-        executeRequest(socket);
-        handleResponse();
+        //executeRequest();
+        //handleResponse();
     }
 
-    /*public static void main(String[] args) throws IOException {
-    new HttpClient("urlecho.appspot.com", 80, "/echo?body=Hello+World");
-    }*/
+    public Socket getSocket() { return socket; }
 
-    public int getStatusCode() {
-        return statusCode;
-    }
+    public void closeSocket() throws IOException { socket.close(); }
+
+    public int getStatusCode() { return statusCode; }
 
     public String getResponseHeader(String headerName) {
         return responseHeaders.get(headerName);
@@ -48,17 +37,19 @@ public class HttpClient {
         return responseBody;
     }
 
-    public HttpMessage executeRequest(Socket socket) throws IOException {
+    public HttpMessage executeRequest() throws IOException {
         HttpMessage request = new HttpMessage();
 
         for(Map.Entry<String, String> header : requestHeaders.entrySet()) {
             request.setHeader(header.getKey(), header.getValue());
+            System.out.println("header: "+header.getKey() + "value: " + header.getValue());
         }
+
         request.setStartLine(startLine);
         request.write(socket);
 
-        return request;
-        // -----
+        HttpMessage response = handleResponse();
+        return response;
     }
 
     public HttpMessage handleResponse() throws IOException {
@@ -66,11 +57,10 @@ public class HttpClient {
 
         String responseLine = HttpMessage.readLine(socket);
         response.setStartLine(responseLine);
-        System.out.println("responseline: " + responseLine + "=" + response.getStartLine());
 
         String[] responseLineParts = response.getStartLine().split(" ");
-        response.setCode(responseLineParts[1]);
-        System.out.println(statusCode);
+        response.setCode(Integer.parseInt(responseLineParts[1]));
+        statusCode = Integer.parseInt(responseLineParts[1]);
 
         String headerLine;
         while(!(headerLine = HttpMessage.readLine(socket)).isEmpty()){
@@ -88,6 +78,7 @@ public class HttpClient {
 
         this.responseBody = body.toString();
         System.out.println("\r\r\r" + responseBody);
+
         return response;
     }
 
