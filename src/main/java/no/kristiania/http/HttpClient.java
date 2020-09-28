@@ -76,6 +76,7 @@ public class HttpClient {
             body.append((char) socket.getInputStream().read());
         }
 
+        response.setBody(body.toString());
         this.responseBody = body.toString();
         System.out.println("\r\r\r" + responseBody);
 

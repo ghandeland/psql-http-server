@@ -10,12 +10,11 @@ public class HttpMessage {
     private Map<String, String> headers = new HashMap<>();
     private String startLine;
     private String code;
+    private String body;
 
     public String getBody() { return body; }
 
     public void setBody(String body) { this.body = body; }
-
-    private String body;
 
     public String getCode() { return code; }
 

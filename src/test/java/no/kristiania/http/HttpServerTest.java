@@ -55,6 +55,7 @@ public class HttpServerTest {
         server.stop();
     }
 
+
     @Test
     void shouldParseRequestParametersWithLocation() throws IOException {
         HttpServer server = new HttpServer(10005);
@@ -68,10 +69,9 @@ public class HttpServerTest {
 
     @Test
     void shouldParseRequestParametersWithBody() throws IOException {
-        HttpServer server = new HttpServer(0);
+        HttpServer server = new HttpServer(10006);
         server.start();
-        int port = server.getActualPort();
-        HttpClient client = new HttpClient("localhost", port, "?body=HelloWorld");
+        HttpClient client = new HttpClient("localhost", 10006, "?body=HelloWorld");
         HttpMessage response = client.executeRequest();
         assertEquals("HelloWorld", response.getBody());
         client.closeSocket();

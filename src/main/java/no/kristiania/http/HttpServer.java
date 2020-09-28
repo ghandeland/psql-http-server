@@ -54,7 +54,16 @@ public class HttpServer {
             for(String parameter : queryParameters) {
                 String[] parameterPair = parameter.split("=");
                 request.setHeader(parameterPair[0], parameterPair[1]);
+
             }
+        }
+
+        String requestBody = request.getHeader("body");
+
+        if(request.getHeader("body") != null){
+            response.setBody(requestBody);
+        } else{
+            response.setBody("Hello World");
         }
 
         if(request.getHeader("Location") != null) {
@@ -68,7 +77,6 @@ public class HttpServer {
         }
 
         response.setStartLine("HTTP/1.1 " + response.getCode() + " OK");
-        response.setBody("Hello world");
         response.setHeader("Content-Length", Integer.toString(response.getBody().length()));
         response.setHeader("Content-Type", "text/plain");
 
