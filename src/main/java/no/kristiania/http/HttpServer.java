@@ -91,13 +91,13 @@ public class HttpServer {
     }
 
     public static void main(String[] args) throws IOException {
-        HttpServer server = new HttpServer(10010);
+        HttpServer server = new HttpServer(10011);
         server.start();
-        HttpClient client = new HttpClient("localhost", 10010, "\"?status=302&Location=http://www.example.com\"");
+        /*HttpClient client = new HttpClient("localhost", 10010, "\"?status=302&Location=http://www.example.com\"");
         client.executeRequest();
         HttpMessage response = client.executeRequest();
         client.closeSocket();
-        server.stop();
+        server.stop();*/
 
     }
 
