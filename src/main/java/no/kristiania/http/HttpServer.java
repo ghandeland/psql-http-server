@@ -40,6 +40,7 @@ public class HttpServer {
 
     private void handleRequest(Socket socket) throws IOException {
         HttpMessage response = new HttpMessage();
+        HttpMessage request = new HttpMessage();
 
         String requestLine = HttpMessage.readLine(socket);
         System.out.println(requestLine);
@@ -52,22 +53,31 @@ public class HttpServer {
             String[] queryParameters = queryString.split("&");
             for(String parameter : queryParameters) {
                 String[] parameterPair = parameter.split("=");
-                response.setHeader(parameterPair[0], parameterPair[1]);
+                request.setHeader(parameterPair[0], parameterPair[1]);
             }
         }
 
-        //response.setCode();
+        if(request.getHeader("Location") != null) {
+            response.setHeader("Location", request.getHeader("Location"));
+        }
+
+        if(request.getHeader("status") != null) {
+            response.setCode(request.getHeader("status"));
+        } else {
+            response.setCode("200");
+        }
+
         response.setStartLine("HTTP/1.1 " + response.getCode() + " OK");
         response.setBody("Hello world");
         response.setHeader("Content-Length", Integer.toString(response.getBody().length()));
         response.setHeader("Content-Type", "text/plain");
 
 
-        String responseString = "HTTP/1.1 " + response.getCode() + " OK\r\n" +
+        /*String responseString = "HTTP/1.1 " + response.getCode() + " OK\r\n" +
                 "Content-Length: 12\r\n" +
                 "Content-Type: text/plain\r\n" +
                 "\r\n" +
-                "Hello World!";
+                "Hello World!";*/
 
         response.write(socket);
     }

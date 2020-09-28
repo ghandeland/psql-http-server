@@ -9,7 +9,7 @@ public class HttpMessage {
 
     private Map<String, String> headers = new HashMap<>();
     private String startLine;
-    private int code;
+    private String code;
 
     public String getBody() { return body; }
 
@@ -17,9 +17,9 @@ public class HttpMessage {
 
     private String body;
 
-    public int getCode() { return code; }
+    public String getCode() { return code; }
 
-    public void setCode(int code) { this.code = code; }
+    public void setCode(String code) { this.code = code; }
 
     public void setHeader(String headerName, String headerValue) { headers.put(headerName, headerValue); }
 

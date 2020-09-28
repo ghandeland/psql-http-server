@@ -59,8 +59,8 @@ public class HttpClient {
         response.setStartLine(responseLine);
 
         String[] responseLineParts = response.getStartLine().split(" ");
-        response.setCode(Integer.parseInt(responseLineParts[1]));
-        statusCode = Integer.parseInt(responseLineParts[1]);
+        response.setCode(responseLineParts[1]);
+        //statusCode = Integer.parseInt(responseLineParts[1]);
 
         String headerLine;
         while(!(headerLine = HttpMessage.readLine(socket)).isEmpty()){
