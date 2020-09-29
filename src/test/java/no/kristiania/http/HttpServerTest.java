@@ -92,10 +92,22 @@ public class HttpServerTest {
         Files.writeString(new File(documentRoot, "test.txt").toPath(), fileContent);
 
         HttpClient client = new HttpClient("localhost", 10013, "/test.txt");
-        client.executeRequest();
+        HttpMessage response = client.executeRequest();
 
-        assertEquals(fileContent, client.getResponseBody());
+        assertEquals(fileContent, response.getBody());
 
+        client.closeSocket();
+        server.stop();
+    }
+
+
+    @Test
+    void shouldReturn404IfFileNotFound() throws IOException {
+        HttpServer server = new HttpServer(10014);
+        server.start();
+        server.setDocumentRoot(new File("target"));
+        HttpClient client = new HttpClient("localhost", 10003, "/nonexistingFile.txt");
+        assertEquals(404, client.getStatusCode());
         client.closeSocket();
         server.stop();
     }

@@ -4,11 +4,14 @@ import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 public class HttpServer {
 
     private final ServerSocket serverSocket;
     private ServerThread serverThread;
+    private File documentRoot;
 
     public HttpServer(int port) throws IOException {
         this.serverSocket = new ServerSocket(port);
@@ -16,7 +19,7 @@ public class HttpServer {
     }
 
     public void setDocumentRoot(File documentRoot) {
-
+        this.documentRoot = documentRoot;
     }
 
     private class ServerThread extends Thread {
@@ -54,30 +57,41 @@ public class HttpServer {
         String requestTarget = requestLine.split(" ")[1];
         int questionPos = requestTarget.indexOf('?');
 
-        if(questionPos != -1) {
+        if (questionPos != -1) {
             String queryString = requestTarget.substring(questionPos + 1);
 
             String[] queryParameters = queryString.split("&");
-            for(String parameter : queryParameters) {
+            for (String parameter : queryParameters) {
                 String[] parameterPair = parameter.split("=");
                 request.setHeader(parameterPair[0], parameterPair[1]);
 
             }
+
+            //**********************
+
+
+        } else if (!requestTarget.contains("echo")) {
+            File targetFile = new File(documentRoot, requestTarget);
+            response.setCode("200");
+            response.setStartLine("HTTP/1.1 " + response.getCode() + " OK");
+            //response.setBody(targetFile);
+            response.setHeader("Content-Length", ""+targetFile.length());
+            response.writeWithFile(socket, targetFile);
+            return;
         }
 
-        String requestBody = request.getHeader("body");
-
-        if(request.getHeader("body") != null){
+        if (request.getHeader("body") != null) {
+            String requestBody = request.getHeader("body");
             response.setBody(requestBody);
-        } else{
+        } else {
             response.setBody("Hello World");
         }
 
-        if(request.getHeader("Location") != null) {
+        if (request.getHeader("Location") != null) {
             response.setHeader("Location", request.getHeader("Location"));
         }
 
-        if(request.getHeader("status") != null) {
+        if (request.getHeader("status") != null) {
             response.setCode(request.getHeader("status"));
         } else {
             response.setCode("200");
@@ -86,25 +100,19 @@ public class HttpServer {
         response.setStartLine("HTTP/1.1 " + response.getCode() + " OK");
         response.setHeader("Content-Length", Integer.toString(response.getBody().length()));
         response.setHeader("Content-Type", "text/plain");
-
-
-        /*String responseString = "HTTP/1.1 " + response.getCode() + " OK\r\n" +
-                "Content-Length: 12\r\n" +
-                "Content-Type: text/plain\r\n" +
-                "\r\n" +
-                "Hello World!";*/
-
         response.write(socket);
     }
 
-    public static void main(String[] args) throws IOException {
+    /*public static void main(String[] args) throws IOException {
         HttpServer server = new HttpServer(10011);
         server.start();
-        /*HttpClient client = new HttpClient("localhost", 10010, "\"?status=302&Location=http://www.example.com\"");
+        HttpClient client = new HttpClient("localhost", 10010, "\"?status=302&Location=http://www.example.com\"");
         client.executeRequest();
         HttpMessage response = client.executeRequest();
         client.closeSocket();
-        server.stop();*/
-    }
+        server.stop();
+    }*/
+
+
 
 }
