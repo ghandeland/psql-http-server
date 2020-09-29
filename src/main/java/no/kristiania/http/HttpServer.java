@@ -1,5 +1,6 @@
 package no.kristiania.http;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -14,14 +15,20 @@ public class HttpServer {
         serverThread = new ServerThread();
     }
 
+    public void setDocumentRoot(File documentRoot) {
+
+    }
+
     private class ServerThread extends Thread {
         @Override
         public void run() {
-            try {
-                Socket socket = serverSocket.accept();
-                handleRequest(socket);
-            } catch(IOException e) {
-                e.printStackTrace();
+            while(true) {
+                try {
+                    Socket socket = serverSocket.accept();
+                    handleRequest(socket);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         }
     }
@@ -98,7 +105,6 @@ public class HttpServer {
         HttpMessage response = client.executeRequest();
         client.closeSocket();
         server.stop();*/
-
     }
 
 }

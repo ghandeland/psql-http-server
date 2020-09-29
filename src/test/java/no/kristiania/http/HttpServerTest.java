@@ -4,7 +4,10 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.util.Date;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -74,6 +77,25 @@ public class HttpServerTest {
         HttpClient client = new HttpClient("localhost", 10006, "?body=HelloWorld");
         HttpMessage response = client.executeRequest();
         assertEquals("HelloWorld", response.getBody());
+        client.closeSocket();
+        server.stop();
+    }
+
+    @Test
+    void shouldReturnFileOnDisk() throws IOException {
+        HttpServer server = new HttpServer(10013);
+        server.start();
+
+        File documentRoot = new File("target");
+        server.setDocumentRoot(documentRoot);
+        String fileContent = "Test " + new Date();
+        Files.writeString(new File(documentRoot, "test.txt").toPath(), fileContent);
+
+        HttpClient client = new HttpClient("localhost", 10013, "/test.txt");
+        client.executeRequest();
+
+        assertEquals(fileContent, client.getResponseBody());
+
         client.closeSocket();
         server.stop();
     }

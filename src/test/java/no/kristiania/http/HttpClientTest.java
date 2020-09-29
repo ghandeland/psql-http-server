@@ -18,14 +18,16 @@ class HttpClientTest {
     void shouldReturnUnsuccessfulStatusCode() throws IOException {
         HttpClient client = makeEchoRequest("/echo?status=404");
 
-        assertEquals(404, client.getStatusCode());
+        assertEquals("404", client.executeRequest().getCode());
     }
 
     @Test
     void shouldReadResponseHeader() throws IOException {
-        HttpClient client = makeEchoRequest("/echo?body=Hello");
-
-        assertEquals("5", client.getResponseHeader("Content-Length"));
+        HttpServer server = new HttpServer(10012);
+        HttpClient client = new HttpClient("localhost", 10012, "/echo?body=Hello");
+        server.start();
+        assertEquals("5", client.executeRequest().getHeader("Content-Length"));
+        server.stop();
     }
 
     private HttpClient makeEchoRequest(String s) throws IOException {
@@ -35,6 +37,6 @@ class HttpClientTest {
     @Test
     void shouldReadResponseBody() throws IOException {
         HttpClient client = makeEchoRequest("/echo?body=Hello");
-        assertEquals("Hello", client.getResponseBody());
+        assertEquals("Hello", client.executeRequest().getBody());
     }
 }
