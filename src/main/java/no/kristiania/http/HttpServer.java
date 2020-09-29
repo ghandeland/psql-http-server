@@ -77,9 +77,14 @@ public class HttpServer {
                 return;
             }
 
+            String contentType = "text/html";
+            if(targetFile.getName().endsWith(".txt")){
+                contentType = "text/plain";
+            }
+
             response.setCode("200");
             response.setStartLine("HTTP/1.1 " + response.getCode() + " OK");
-            response.setHeader("Content-Type", "text/plain");
+            response.setHeader("Content-Type", contentType);
 
             response.setHeader("Content-Length", ""+targetFile.length());
             response.writeWithFile(socket, targetFile);
