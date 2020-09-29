@@ -10,8 +10,9 @@ class HttpClientTest {
     @Test
     void shouldReturnSuccessfulStatusCode() throws IOException {
         HttpClient client = makeEchoRequest("/echo");
+        HttpMessage response = client.executeRequest();
 
-        assertEquals(200, client.getStatusCode());
+        assertEquals("200", response.getCode());
     }
 
     @Test

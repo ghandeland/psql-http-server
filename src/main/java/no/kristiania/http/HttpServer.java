@@ -6,12 +6,16 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class HttpServer {
 
     private final ServerSocket serverSocket;
     private ServerThread serverThread;
-    private File documentRoot;
+    private File documentRoot = new File("src/main/resources");
+    private ArrayList<User> users = new ArrayList<>();
 
     public HttpServer(int port) throws IOException {
         this.serverSocket = new ServerSocket(port);
@@ -30,7 +34,7 @@ public class HttpServer {
                     Socket socket = serverSocket.accept();
                     handleRequest(socket);
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    //e.printStackTrace();
                 }
             }
         }
@@ -54,9 +58,42 @@ public class HttpServer {
 
         String requestLine = HttpMessage.readLine(socket);
         System.out.println(requestLine);
-        String requestTarget = requestLine.split(" ")[1];
+
+        String[] requestLineParts = requestLine.split(" ");
+
+        String requestType = requestLineParts[0];
+
+        String requestTarget = requestLineParts[1];
+
+
+        if(requestType.equals("POST")) {
+            request.readAndSetHeaders(socket);
+            int contentLength = Integer.parseInt(request.getHeader("Content-Length"));
+            String body = request.readBody(socket, contentLength);
+            request.setBody(body);
+
+            Map<String, String> userMap = new HashMap<>();
+            String[] queryParameters = body.split("&");
+            for (String parameter : queryParameters) {
+                String[] parameterPair = parameter.split("=");
+                userMap.put(parameterPair[0], parameterPair[1]);
+            }
+
+            users.add(new User(userMap.get("guestName"), userMap.get("email")));
+            for(User user : users) {
+                System.out.println("\r\rName: " + user.getName());
+                System.out.println("Email: " + user.getEmail());
+
+            }
+
+            response.setCode("200");
+            response.setStartLine("HTTP/1.1 " + response.getCode() + " OK");
+            response.write(socket);
+        }
+
         int questionPos = requestTarget.indexOf('?');
-        if(requestTarget.equals("")) {
+
+        if(requestTarget.equals("") || requestTarget.equals("/")) {
             response.setBody("Hello world");
         } else if (questionPos != -1) {
             String queryString = requestTarget.substring(questionPos + 1);
@@ -115,11 +152,8 @@ public class HttpServer {
     }
 
     public static void main(String[] args) throws IOException {
-        HttpServer server = new HttpServer(8080);
+        HttpServer server = new HttpServer(10017);
         server.start();
-        server.setDocumentRoot(new File("src/main/resources"));
     }
-
-
 
 }

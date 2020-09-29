@@ -32,6 +32,13 @@ public class HttpMessage {
 
     public String getStartLine() { return startLine; }
 
+    public void printAllHeadersAndBody() {
+        for(Map.Entry<String, String> header : headers.entrySet()) {
+            System.out.println("Key: " + header.getKey() + " Value: " + header.getValue());
+        }
+        System.out.println("Body:\r" + getBody());
+    }
+
     public void write(Socket socket) throws IOException {
         writeLine(socket, startLine);
         for(Map.Entry<String, String> header : headers.entrySet()) {
@@ -52,11 +59,8 @@ public class HttpMessage {
 
         try (FileInputStream inputStream = new FileInputStream(targetFile)) {
             inputStream.transferTo(socket.getOutputStream());
-
         }
     }
-
-
 
     public void writeLine(Socket socket, String line) throws IOException {
         socket.getOutputStream().write((line + "\r\n").getBytes());
@@ -78,5 +82,24 @@ public class HttpMessage {
             sb.append((char) c);
         }
         return sb.toString();
+    }
+
+    public void readAndSetHeaders(Socket socket) throws IOException {
+        String headerLine;
+        while(!(headerLine = HttpMessage.readLine(socket)).isEmpty()){
+            int colonPos = headerLine.indexOf(':');
+            String headerName = headerLine.substring(0, colonPos);
+            String headerValue = headerLine.substring(colonPos + 1).trim();
+            setHeader(headerName, headerValue);
+        }
+    }
+
+    public String readBody(Socket socket, int contentLength) throws IOException {
+        StringBuilder body = new StringBuilder();
+        for (int i = 0; i < contentLength; i++) {
+            body.append((char) socket.getInputStream().read());
+        }
+
+        return body.toString();
     }
 }

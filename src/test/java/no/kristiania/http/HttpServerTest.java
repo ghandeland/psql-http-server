@@ -137,10 +137,25 @@ public class HttpServerTest {
 
         HttpClient client2 = new HttpClient("localhost", 10015, "/index.html");
         HttpMessage response2 = client2.executeRequest();
-        client1.closeSocket();
+        client2.closeSocket();
 
         assertEquals("text/html", response2.getHeader("Content-Type"));
 
+        server.stop();
+    }
+
+    @Test
+    void shouldPostHttpContent() throws IOException {
+        HttpServer server = new HttpServer(10016);
+        server.start();
+        HttpClient postRequest = new HttpClient("localhost", 10016, "/submit", "guestName=Someone&email=someone@example.com");
+        HttpMessage response = postRequest.executeRequest();
+        assertEquals("200", response.getCode());
+
+        //HttpClient client = new HttpClient("localhost", 10016, "/lastSubmission");
+        //assertEquals("Someone <someone@example.com>", client.getResponseBody());
+
+        postRequest.closeSocket();
         server.stop();
     }
 }

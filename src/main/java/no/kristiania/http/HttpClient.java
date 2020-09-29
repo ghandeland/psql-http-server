@@ -6,46 +6,58 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class HttpClient {
-    private int statusCode = 200;
-    private Map<String, String> requestHeaders = new HashMap<>();
-    private Map<String, String> responseHeaders = new HashMap<>();
-    private String responseBody = "";
-    private String startLine = "";
     private Socket socket;
+    private String requestTarget;
+    private String host;
+    private String requestBody;
 
     public HttpClient(final String hostName, int port, final String requestTarget) throws IOException {
 
-        this.startLine = "GET " + requestTarget + " HTTP/1.1";
         this.socket = new Socket(hostName, port);
-        requestHeaders.put("Host", hostName);
+        this.host = hostName;
+        this.requestTarget = requestTarget;
 
         //executeRequest();
-        //handleResponse();
     }
 
-    public Socket getSocket() { return socket; }
+    public HttpClient(String hostName, int port, String requestTarget, String requestBody) throws IOException {
+        this.socket = new Socket(hostName, port);
+        this.host = hostName;
+        this.requestTarget = requestTarget;
+        this.requestBody = requestBody;
+    }
 
     public void closeSocket() throws IOException { socket.close(); }
 
-    public int getStatusCode() { return statusCode; }
-
-    public String getResponseHeader(String headerName) {
-        return responseHeaders.get(headerName);
-    }
-
-    public String getResponseBody() {
-        return responseBody;
-    }
 
     public HttpMessage executeRequest() throws IOException {
         HttpMessage request = new HttpMessage();
 
-        for(Map.Entry<String, String> header : requestHeaders.entrySet()) {
-            request.setHeader(header.getKey(), header.getValue());
-            System.out.println("header: "+header.getKey() + "value: " + header.getValue());
+        if(requestBody != null) {
+            request.setStartLine("POST " + requestTarget + " HTTP/1.1");
+            request.setBody(requestBody);
+            request.setHeader("Host", host);
+            request.setHeader("Content-Length", "" + requestBody.length());
+            request.write(socket);
+            HttpMessage response = handleResponse();
+            return response;
         }
 
-        request.setStartLine(startLine);
+        request.setStartLine("GET " + requestTarget + " HTTP/1.1");
+        request.setHeader("Host", host);
+        request.write(socket);
+        HttpMessage response = handleResponse();
+        return response;
+    }
+
+    public HttpMessage executePostRequest() throws IOException {
+
+        HttpMessage request = new HttpMessage();
+
+        request.setHeader("Host", host);
+        request.setStartLine("POST " + requestTarget + " HTTP/1.1");
+        request.setHeader("Host", host);
+
         request.write(socket);
 
         HttpMessage response = handleResponse();
@@ -57,31 +69,20 @@ public class HttpClient {
 
         String responseLine = HttpMessage.readLine(socket);
         response.setStartLine(responseLine);
-        System.out.println("ResponseLine from handleResponse() return: " + responseLine);
 
         String[] responseLineParts = response.getStartLine().split(" ");
+
         response.setCode(responseLineParts[1]);
-        //statusCode = Integer.parseInt(responseLineParts[1]);
+
         if(response.getCode().equals("404")) {
             return response;
         }
-        String headerLine;
-        while(!(headerLine = HttpMessage.readLine(socket)).isEmpty()){
-            int colonPos = headerLine.indexOf(':');
-            String headerName = headerLine.substring(0, colonPos);
-            String headerValue = headerLine.substring(colonPos + 1).trim();
-            response.setHeader(headerName, headerValue);
-        }
 
-        int contentLength = Integer.parseInt(response.getHeader("Content-Length"));
-        StringBuilder body = new StringBuilder();
-        for (int i = 0; i < contentLength; i++) {
-            body.append((char) socket.getInputStream().read());
+        response.readAndSetHeaders(socket);
+        if(response.getHeader("Content-Length") != null) {
+            int contentLength = Integer.parseInt(response.getHeader("Content-Length"));
+            response.setBody(response.readBody(socket, contentLength));
         }
-
-        response.setBody(body.toString());
-        this.responseBody = body.toString();
-        System.out.println("\r\r\r" + responseBody);
 
         return response;
     }
