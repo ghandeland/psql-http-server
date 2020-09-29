@@ -56,8 +56,9 @@ public class HttpServer {
         System.out.println(requestLine);
         String requestTarget = requestLine.split(" ")[1];
         int questionPos = requestTarget.indexOf('?');
-
-        if (questionPos != -1) {
+        if(requestTarget.equals("")) {
+            response.setBody("Hello world");
+        } else if (questionPos != -1) {
             String queryString = requestTarget.substring(questionPos + 1);
 
             String[] queryParameters = queryString.split("&");
@@ -66,15 +67,20 @@ public class HttpServer {
                 request.setHeader(parameterPair[0], parameterPair[1]);
 
             }
-
-            //**********************
-
-
         } else if (!requestTarget.contains("echo")) {
             File targetFile = new File(documentRoot, requestTarget);
+            if(!targetFile.exists()) {
+                response.setCode("404");
+                response.setStartLine("HTTP/1.1 " + response.getCode() + " NOT FOUND");
+                response.writeLine(socket, response.getStartLine());
+                response.writeLine(socket, "");
+                return;
+            }
+
             response.setCode("200");
             response.setStartLine("HTTP/1.1 " + response.getCode() + " OK");
-            //response.setBody(targetFile);
+            response.setHeader("Content-Type", "text/plain");
+
             response.setHeader("Content-Length", ""+targetFile.length());
             response.writeWithFile(socket, targetFile);
             return;
@@ -103,15 +109,11 @@ public class HttpServer {
         response.write(socket);
     }
 
-    /*public static void main(String[] args) throws IOException {
-        HttpServer server = new HttpServer(10011);
+    public static void main(String[] args) throws IOException {
+        HttpServer server = new HttpServer(8080);
         server.start();
-        HttpClient client = new HttpClient("localhost", 10010, "\"?status=302&Location=http://www.example.com\"");
-        client.executeRequest();
-        HttpMessage response = client.executeRequest();
-        client.closeSocket();
-        server.stop();
-    }*/
+        server.setDocumentRoot(new File("src/main/resources"));
+    }
 
 
 

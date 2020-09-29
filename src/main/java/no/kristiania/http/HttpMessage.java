@@ -58,7 +58,7 @@ public class HttpMessage {
 
 
 
-    private void writeLine(Socket socket, String line) throws IOException {
+    public void writeLine(Socket socket, String line) throws IOException {
         socket.getOutputStream().write((line + "\r\n").getBytes());
     }
 

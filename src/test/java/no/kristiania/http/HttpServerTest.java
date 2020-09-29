@@ -15,10 +15,10 @@ public class HttpServerTest {
 
     @Test
     void shouldReadResponseCode() throws IOException {
-        HttpServer server = new HttpServer(0);
+        HttpServer server = new HttpServer(10000);
         server.start();
         int port = server.getActualPort();
-        HttpClient client = new HttpClient("localhost", port, "");
+        HttpClient client = new HttpClient("localhost", 10000, "");
         HttpMessage response = client.executeRequest();
         assertEquals("200", response.getCode());
     }
@@ -105,10 +105,42 @@ public class HttpServerTest {
     void shouldReturn404IfFileNotFound() throws IOException {
         HttpServer server = new HttpServer(10014);
         server.start();
+
         server.setDocumentRoot(new File("target"));
-        HttpClient client = new HttpClient("localhost", 10003, "/nonexistingFile.txt");
-        assertEquals(404, client.getStatusCode());
+        HttpClient client = new HttpClient("localhost", 10014, "/nonexistingFile.txt");
+
+        HttpMessage response = client.executeRequest();
+
+        assertEquals("404", response.getCode());
+
         client.closeSocket();
+        server.stop();
+
+    }
+
+    @Test
+    void shouldReturnCorrectContentType() throws IOException {
+        HttpServer server = new HttpServer(10015);
+        server.start();
+
+        File documentRoot = new File("target");
+        server.setDocumentRoot(documentRoot);
+
+        Files.writeString(new File(documentRoot, "index.html").toPath(), "<html>Hello world</html>");
+        Files.writeString(new File(documentRoot, "test.txt").toPath(), "Hello world");
+
+        HttpClient client1 = new HttpClient("localhost", 10015, "/test.txt");
+        HttpMessage response1 = client1.executeRequest();
+        client1.closeSocket();
+
+        assertEquals("text/plain", response1.getHeader("Content-Type"));
+
+        HttpClient client2 = new HttpClient("localhost", 10015, "/index.html");
+        HttpMessage response2 = client2.executeRequest();
+        client1.closeSocket();
+
+        assertEquals("text/html", response2.getHeader("Content-Type"));
+
         server.stop();
     }
 }
