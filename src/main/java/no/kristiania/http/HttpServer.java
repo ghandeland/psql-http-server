@@ -152,7 +152,7 @@ public class HttpServer {
     }
 
     public static void main(String[] args) throws IOException {
-        HttpServer server = new HttpServer(10017);
+        HttpServer server = new HttpServer(8080);
         server.start();
     }
 
