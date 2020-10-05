@@ -117,6 +117,8 @@ public class HttpServer {
             String contentType = "text/html";
             if(targetFile.getName().endsWith(".txt")){
                 contentType = "text/plain";
+            } else if(targetFile.getName().endsWith(".css")) {
+                contentType = "text/css";
             }
 
             response.setCode("200");
