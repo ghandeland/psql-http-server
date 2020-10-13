@@ -2,16 +2,19 @@ package no.kristiania.http;
 
 import org.postgresql.ds.PGSimpleDataSource;
 
+import javax.sql.DataSource;
 import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+
 
 public class HttpServer {
 
@@ -23,13 +26,12 @@ public class HttpServer {
     public HttpServer(int port) throws IOException {
         this.serverSocket = new ServerSocket(port);
         serverThread = new ServerThread();
+    }
 
-        PGSimpleDataSource pgDataSource = new PGSimpleDataSource();
-        pgDataSource.setUrl("jdbc:postgresql://localhost:5432/project");
-        pgDataSource.setUser("oppgavesett08");
-        pgDataSource.setPassword("nw3fGmA9nKgbwtGwpj");
-        this.projectMemberDao = new ProjectMemberDao(pgDataSource);
-
+    public HttpServer(int port, DataSource dataSource) throws IOException {
+        this.serverSocket = new ServerSocket(port);
+        serverThread = new ServerThread();
+        this.projectMemberDao = new ProjectMemberDao(dataSource);
     }
 
     public void setDocumentRoot(File documentRoot) {
@@ -61,7 +63,6 @@ public class HttpServer {
         return serverSocket.getLocalPort();
     }
 
-
     private void handleRequest(Socket socket) throws IOException, SQLException {
         HttpMessage response = new HttpMessage();
         HttpMessage request = new HttpMessage();
@@ -84,15 +85,20 @@ public class HttpServer {
 
             System.out.println(body);
 
-            Map<String, String> userMap = new HashMap<>();
+            Map<String, String> projectMemberMap = new HashMap<>();
             String[] queryParameters = body.split("&");
             for (String parameter : queryParameters) {
                 String[] parameterPair = parameter.split("=");
-                userMap.put(parameterPair[0], parameterPair[1]);
+                projectMemberMap.put(parameterPair[0], parameterPair[1]);
             }
 
-            projectMemberDao.insert(userMap.get("name"), userMap.get("role"));
+            String projectMemberName = java.net.URLDecoder.decode(projectMemberMap.get("name"), StandardCharsets.ISO_8859_1.name());
+            String projectMemberRole = java.net.URLDecoder.decode(projectMemberMap.get("role"), StandardCharsets.ISO_8859_1.name());
 
+            System.out.println("PROJECTMEMBERNAME: " + projectMemberName + "PROJECTMEMBERROLE: " + projectMemberRole);
+            ProjectMember projectMember = new ProjectMember(projectMemberName, projectMemberRole);
+
+            projectMemberDao.insert(projectMember);
 
             response.setCode("200");
             response.setStartLine("HTTP/1.1 " + response.getCode() + " OK");
@@ -162,9 +168,13 @@ public class HttpServer {
     }
 
     public static void main(String[] args) throws IOException {
+        PGSimpleDataSource pgDataSource = new PGSimpleDataSource();
+        pgDataSource.setUrl("jdbc:postgresql://localhost:5432/project");
+        pgDataSource.setUser("oppgavesett08");
+        pgDataSource.setPassword("nw3fGmA9nKgbwtGwpj");
 
+        HttpServer server = new HttpServer(8080, pgDataSource);
 
-                HttpServer server = new HttpServer(8080);
         server.start();
     }
 
