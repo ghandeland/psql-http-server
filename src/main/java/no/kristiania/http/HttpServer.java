@@ -1,11 +1,14 @@
 package no.kristiania.http;
 
+import org.postgresql.ds.PGSimpleDataSource;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -15,11 +18,18 @@ public class HttpServer {
     private final ServerSocket serverSocket;
     private ServerThread serverThread;
     private File documentRoot = new File("src/main/resources");
-    private ArrayList<User> users = new ArrayList<>();
+    private ProjectMemberDao projectMemberDao;
 
     public HttpServer(int port) throws IOException {
         this.serverSocket = new ServerSocket(port);
         serverThread = new ServerThread();
+
+        PGSimpleDataSource pgDataSource = new PGSimpleDataSource();
+        pgDataSource.setUrl("jdbc:postgresql://localhost:5432/project");
+        pgDataSource.setUser("oppgavesett08");
+        pgDataSource.setPassword("nw3fGmA9nKgbwtGwpj");
+        this.projectMemberDao = new ProjectMemberDao(pgDataSource);
+
     }
 
     public void setDocumentRoot(File documentRoot) {
@@ -33,7 +43,7 @@ public class HttpServer {
                 try {
                     Socket socket = serverSocket.accept();
                     handleRequest(socket);
-                } catch (IOException e) {
+                } catch (IOException | SQLException e) {
                     //e.printStackTrace();
                 }
             }
@@ -52,7 +62,7 @@ public class HttpServer {
     }
 
 
-    private void handleRequest(Socket socket) throws IOException {
+    private void handleRequest(Socket socket) throws IOException, SQLException {
         HttpMessage response = new HttpMessage();
         HttpMessage request = new HttpMessage();
 
@@ -72,6 +82,8 @@ public class HttpServer {
             String body = request.readBody(socket, contentLength);
             request.setBody(body);
 
+            System.out.println(body);
+
             Map<String, String> userMap = new HashMap<>();
             String[] queryParameters = body.split("&");
             for (String parameter : queryParameters) {
@@ -79,12 +91,8 @@ public class HttpServer {
                 userMap.put(parameterPair[0], parameterPair[1]);
             }
 
-            users.add(new User(userMap.get("guestName"), userMap.get("email")));
-            for(User user : users) {
-                System.out.println("\r\rName: " + user.getName());
-                System.out.println("Email: " + user.getEmail());
+            projectMemberDao.insert(userMap.get("name"), userMap.get("role"));
 
-            }
 
             response.setCode("200");
             response.setStartLine("HTTP/1.1 " + response.getCode() + " OK");
@@ -154,8 +162,11 @@ public class HttpServer {
     }
 
     public static void main(String[] args) throws IOException {
-        HttpServer server = new HttpServer(8080);
+
+
+                HttpServer server = new HttpServer(8080);
         server.start();
     }
+
 
 }
